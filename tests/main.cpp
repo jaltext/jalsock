@@ -1,6 +1,6 @@
-#include "socket/socket.hpp"
+#include "server.hpp"
 
 int main() {
-    Socket s;
-    std::cout << "hi\n";
+    Server server{"8080"};
+    server.run();
 }
