@@ -19,10 +19,9 @@ void Server::run() {
     std::cerr << "Server is running on port " << m_port << std::endl;
 
     while (true) {
-        m_epoll.wait(-1);
-        std::cerr << "Event count: " << m_epoll.eventCount() << std::endl;
+        m_epoll.wait(0);
 
-        for (auto& event : m_epoll.events()) {
+        for (const auto& event : m_epoll.events()) {
             if (!event.contains(EpollEventFlag::In)) {
                 continue;
             }
@@ -95,7 +94,7 @@ void Server::handleNewConnection() {
         return;
     }
 
-    m_epoll.add(client_fd, EpollEventFlag::In | EpollEventFlag::EdgeTriggered);
+    m_epoll.add(client_fd, EpollEventFlag::In);
 
     std::cerr << "Connection from "
               << jalsock::networkToPresentation(client_addr) << " (socket "
@@ -128,12 +127,19 @@ void Server::handleRequest(const EpollEvent& event) {
         return;
     }
 
-    for (const auto& event : m_epoll.events()) {
-        if (event.fd() == m_listen_sock.fd() || event.fd() == client_fd) {
+    for (const auto& other_fd : m_epoll.fds()) {
+        if (other_fd == m_listen_sock.fd() || other_fd == client_fd) {
             continue;
         }
 
-        std::cerr << "Send message to socket " << event.fd() << std::endl;
-        jalsock::send(event.fd(), message, client_fd);
+        std::cerr << "Send message to socket " << other_fd << std::endl;
+        auto opt = jalsock::send(other_fd, message, 0);
+
+        if (!opt) {
+            std::cerr << "Can't send data: " << std::strerror(errno)
+                      << std::endl;
+        } else {
+            std::cerr << "Sent " << *opt << " bytes" << std::endl;
+        }
     }
 }

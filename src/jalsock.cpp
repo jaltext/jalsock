@@ -5,10 +5,9 @@
 
 #include <cassert>
 #include <cstddef>
+#include <optional>
 #include <stdexcept>
 #include <vector>
-#include <cstring>
-#include <iostream>
 
 #include "types/addr_info.hpp"
 #include "types/aliases.hpp"
@@ -29,8 +28,15 @@ void close(FileDesc fd) {
     }
 }
 
-std::ptrdiff_t send(FileDesc fd, const std::string_view view, int flags) {
-    return ::send(fd, view.data(), view.size(), flags);
+std::optional<std::ptrdiff_t> send(FileDesc fd, const std::string_view view,
+                                   int flags) {
+    std::ptrdiff_t len = ::send(fd, view.data(), view.size(), flags);
+
+    if (len == -1) {
+        return std::nullopt;
+    }
+
+    return len;
 }
 
 std::pair<int, std::string> recv(FileDesc fd, int flags) {

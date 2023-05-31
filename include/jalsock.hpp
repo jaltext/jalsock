@@ -1,12 +1,14 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <string_view>
 #include <utility>
 #include <vector>
 
 #include "socket/socket.hpp"
 #include "types/addr_info.hpp"
+#include "types/sockaddr.hpp"
 #include "types/aliases.hpp"
 
 namespace jalsock {
@@ -15,7 +17,8 @@ bool bind(const Socket& socket, const AddrInfo& addr);
 
 void close(FileDesc fd);
 
-std::ptrdiff_t send(FileDesc fd, const std::string_view view, int flags);
+std::optional<std::ptrdiff_t> send(FileDesc fd, const std::string_view view,
+                                   int flags);
 
 std::pair<int, std::string> recv(FileDesc fd, int flags);
 

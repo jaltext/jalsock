@@ -1,12 +1,14 @@
 #pragma once
 
 #include <sys/epoll.h>
-#include <array>
-#include <span>
-#include <cstddef>
 
-#include "types/aliases.hpp"
+#include <array>
+#include <cstddef>
+#include <span>
+#include <vector>
+
 #include "epoll/epoll_event.hpp"
+#include "types/aliases.hpp"
 
 enum class EpollCtlOp : int {
     Add = EPOLL_CTL_ADD,
@@ -34,6 +36,7 @@ public:
     FileDesc fd() const;
     int eventCount() const;
     std::span<EpollEvent> events();
+    std::span<FileDesc> fds();
 
 private:
     static constexpr int max_events = 1024;
@@ -41,4 +44,5 @@ private:
     FileDesc m_fd{-1};
     std::array<EpollEvent, max_events> m_events{};
     std::size_t m_event_count{};
+    std::vector<FileDesc> m_fds{};
 };
