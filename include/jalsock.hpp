@@ -20,9 +20,11 @@ void close(FileDesc fd);
 std::optional<std::ptrdiff_t> send(FileDesc fd, const std::string_view view,
                                    int flags);
 
-std::pair<int, std::string> recv(FileDesc fd, int flags);
+std::optional<std::string> recv(FileDesc fd, int flags);
 
 bool listen(const Socket& socket, int backlog);
+
+bool connect(const Socket& socket, const AddrInfo& address);
 
 std::pair<ErrAI, std::vector<AddrInfo>> getAddressInfo(
     const std::string_view node, const std::string_view service,

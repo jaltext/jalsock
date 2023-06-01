@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <optional>
@@ -39,10 +40,15 @@ std::optional<std::ptrdiff_t> send(FileDesc fd, const std::string_view view,
     return len;
 }
 
-std::pair<int, std::string> recv(FileDesc fd, int flags) {
-    static char buffer[1 << 16];
-    int len = ::recv(fd, buffer, sizeof(buffer), flags);
-    return {len, std::string(buffer, std::max(len, 0))};
+std::optional<std::string> recv(FileDesc fd, int flags) {
+    static std::array<char, 1 << 16> buffer;
+    int len = ::recv(fd, buffer.data(), buffer.size(), flags);
+
+    if (len == -1) {
+        return std::nullopt;
+    }
+
+    return std::string(buffer.data(), len);
 }
 
 bool listen(const Socket& socket, int backlog) {
@@ -50,6 +56,10 @@ bool listen(const Socket& socket, int backlog) {
            socket.type() == AISockType::SeqPacket);
 
     return ::listen(socket.fd(), backlog) == 0;
+}
+
+bool connect(const Socket& socket, const AddrInfo& address) {
+    return ::connect(socket.fd(), address.address(), address.addressLen()) == 0;
 }
 
 std::pair<ErrAI, std::vector<AddrInfo>> getAddressInfo(

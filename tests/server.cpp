@@ -103,16 +103,20 @@ void Server::handleNewConnection() {
 
 void Server::handleRequest(const EpollEvent& event) {
     const auto client_fd = event.fd();
-    const auto& [len, message] = jalsock::recv(client_fd, 0);
+    const auto& recv_opt = jalsock::recv(client_fd, 0);
 
-    if (len <= 0) {
-        if (len == 0) {
-            std::cerr << "Disconnected from socket " << client_fd << std::endl;
-        } else {
-            std::cerr << "Can't receive data: " << std::strerror(errno)
-                      << std::endl;
-        }
+    if (!recv_opt) {
+        std::cerr << "Can't receive data: " << std::strerror(errno)
+                  << std::endl;
+        m_epoll.remove(client_fd);
+        jalsock::close(client_fd);
+        return;
+    }
 
+    const auto& message = *recv_opt;
+
+    if (message.empty()) {
+        std::cerr << "Disconnected from socket " << client_fd << std::endl;
         m_epoll.remove(client_fd);
         jalsock::close(client_fd);
         return;
