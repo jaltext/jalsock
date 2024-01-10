@@ -41,7 +41,7 @@ std::optional<std::ptrdiff_t> send(FileDesc fd, const std::string_view view,
 }
 
 std::optional<std::string> recv(FileDesc fd, int flags) {
-    static std::array<char, 1 << 16> buffer;
+    static std::array<char, 1 << 24> buffer;
     int len = ::recv(fd, buffer.data(), buffer.size(), flags);
 
     if (len == -1) {
