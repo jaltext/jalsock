@@ -1,4 +1,4 @@
-add_library(${PROJECT_NAME} STATIC
+add_library(jalsock STATIC
     epoll/epoll.cpp
     epoll/epoll_event.cpp
 
@@ -10,6 +10,6 @@ add_library(${PROJECT_NAME} STATIC
     jalsock.cpp
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC
+target_include_directories(jalsock PUBLIC
     ${PROJECT_SOURCE_DIR}/include)
 
