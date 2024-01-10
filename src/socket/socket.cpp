@@ -41,7 +41,7 @@ FileDesc Socket::fd() const { return m_fd; }
 
 AISockType Socket::type() const { return m_type; }
 
-bool Socket::error() const { return m_fd == 1; }
+bool Socket::error() const { return m_fd == -1; }
 
 bool Socket::setOpt(int level, SockOpt optname) {
     static const int yes = 1;
