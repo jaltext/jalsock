@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <stdexcept>
 #include <string_view>
 
@@ -125,25 +126,44 @@ void Server::handleRequest(const EpollEvent& event) {
     std::cerr << "Socket " << client_fd << ", message: " << message
               << std::endl;
 
-    if (message == "/quit") {
-        m_epoll.remove(client_fd);
-        jalsock::close(client_fd);
+    // `message` is the path to the file to be sent
+    // send the file to the client
+    // it is either a text file or an mp3 file
+    std::string path = std::string(".") + message;
+    std::cerr << "Path: " << path << std::endl;
+
+    std::ifstream file(path, std::ios::binary);
+
+    if (!file.is_open()) {
+        std::cerr << "Can't open file: " << std::strerror(errno) << std::endl;
+        std::size_t file_size = 0;
+        jalsock::send(client_fd, std::string((char*)&file_size, sizeof(file_size)), 0);
         return;
     }
 
-    for (const auto& other_fd : m_epoll.fds()) {
-        if (other_fd == m_listen_sock.fd() || other_fd == client_fd) {
-            continue;
-        }
+    std::string file_contents((std::istreambuf_iterator<char>(file)),
+                              std::istreambuf_iterator<char>());
 
-        std::cerr << "Send message to socket " << other_fd << std::endl;
-        auto opt = jalsock::send(other_fd, message, 0);
+    std::size_t file_size = file_contents.size();
+    jalsock::send(client_fd, std::string((char*)&file_size, sizeof(file_size)), 0);
 
-        if (!opt) {
+    std::cerr << "File size: " << file_size << std::endl;
+
+    std::size_t total_sent = 0;
+    while (total_sent < file_size) {
+        std::cerr << "Sending data..." << std::endl;
+        std::string remaining_data = file_contents.substr(total_sent);
+
+        std::size_t sent = jalsock::send(client_fd, remaining_data, 0).value_or(-1);
+
+        if (sent == -1) {
             std::cerr << "Can't send data: " << std::strerror(errno)
                       << std::endl;
-        } else {
-            std::cerr << "Sent " << *opt << " bytes" << std::endl;
+            break;
         }
+
+        total_sent += sent;
+
+        std::cerr << "Sent " << total_sent << " bytes" << std::endl;
     }
 }
